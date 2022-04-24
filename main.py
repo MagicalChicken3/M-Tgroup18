@@ -30,7 +30,6 @@ class User:
         self.shippinginfo = input("What is your shipping address?")
         print("Account created: " + self.username)
         # Call SQL queries here
-        user_cart = Cart()
         
         
 class Books:
