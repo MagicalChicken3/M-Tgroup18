@@ -101,15 +101,15 @@ def main():
 
     while True:
         print("Welcome to the store!")
-        print(" 1: Login")
-        print(" 2: Register User")
-        print(" 3: Exit")
+        print(" 1 -- Login")
+        print(" 2 -- Register User")
+        print(" 3 -- Exit")
         pre_login = int(input("How can we help you? "))
 
         if pre_login == 1:
             # This is the login menu
             while True:
-                print("Enter Username and Password")
+                print("\nEnter Username and Password")
                 username = input("Username: ")
                 password = input("Password: ")
                 # part after this will have to check the database and call break if it is in the database to exit this while loop
@@ -128,10 +128,17 @@ def main():
 
                 # User will decide/input option
                 choice = int(input("Please Select: "))
-
                 # Once User has inputted their choice, check for path
+                
+                # choice 1 goes into the User Menu to edit info, delete user account, and view past orders. 
                 if choice == 1:
-                    print("View User Info")
+                    print("\n"+"###########")
+                    print("User Menu")
+                    print("###########")
+                    print("1 -- Edit User Info\n2 -- View Past Orders\n3 -- Delete account\n4 -- Exit")
+                    
+                    choice = int(input("Please Select: "))
+                    # This doesn't do anything yet.
 
                 elif choice == 2:
                     print("Cart Information")
