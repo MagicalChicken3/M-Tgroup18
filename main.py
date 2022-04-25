@@ -41,6 +41,11 @@ class User:
         cursor.execute(new_user,(name, username, password,address,city,state,zip,paymentinfo,shippinginfo))
         connection.commit()
 
+def DeleteUser():
+    cursor.execute("DELETE FROM `user_info` WHERE `Username` = username")
+    connection.commit()
+    print("Account has been Delete\n")
+
 class Books:
     def __init__(self, title, author, genre, isbn, price):
         self.title = title
@@ -90,6 +95,8 @@ class Cart():
         self.total = total
 
 
+
+
 def main():
     # This menu table is for the menu system to print out the message/options
     menu = {}
@@ -106,17 +113,29 @@ def main():
         print(" 3 -- Exit")
         pre_login = int(input("How can we help you? "))
 
+        # It'll gather the username and password; then compare to the database and output an error otherwise
         if pre_login == 1:
             # This is the login menu
             while True:
                 print("\nEnter Username and Password")
                 username = input("Username: ")
                 password = input("Password: ")
+
                 # part after this will have to check the database and call break if it is in the database to exit this while loop
-                break
+                cursor.execute('SELECT * FROM user_info WHERE username = %s AND password = %s', (username, password,))
+                # Fetch one record and return result
+                userexist = cursor.fetchone()
+
+                if userexist:
+                    break
+                else:
+                    print("Incorrect username or password")
+
+
+            store_in = True
 
             # This is the store menu
-            while True:
+            while store_in:
                 #Make main menu look nicer
                 print("\n"+"###########")
                 print("Home Page")
@@ -129,16 +148,29 @@ def main():
                 # User will decide/input option
                 choice = int(input("Please Select: "))
                 # Once User has inputted their choice, check for path
-                
-                # choice 1 goes into the User Menu to edit info, delete user account, and view past orders. 
+
+                # choice 1 goes into the User Menu to edit info, delete user account, and view past orders.
                 if choice == 1:
                     print("\n"+"###########")
                     print("User Menu")
                     print("###########")
                     print("1 -- Edit User Info\n2 -- View Past Orders\n3 -- Delete account\n4 -- Exit")
-                    
+
                     choice = int(input("Please Select: "))
                     # This doesn't do anything yet.
+
+                    if choice == 1:
+                        break
+                    elif choice == 2:
+                        break
+                    elif choice == 3:
+                        DeleteUser()
+                        #User no longer exist, exit store
+                        store_in = False
+                    elif choice == 4:
+                        print ("Exiting User Menu")
+                    else:
+                        print("Invalid Menu option. Please try again!")
 
                 elif choice == 2:
                     print("Cart Information")
