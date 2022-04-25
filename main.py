@@ -1,5 +1,5 @@
 '''
-NetID's: dz183, leo94
+NetID's: dz183, leo94, jd2420, dr1374
 Purpose: This is the main file containing all the classes and calls to the database. This is a imitation of a book store that users can buy books from.
 '''
 
