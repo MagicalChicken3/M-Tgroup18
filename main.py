@@ -1,8 +1,3 @@
-'''
-NetID's: dz183, leo94, jd2420, dr1374
-Purpose: This is the main file containing all the classes and calls to the database. This is a imitation of a book store that users can buy books from.
-'''
-
 import pymysql
 
 connection = pymysql.connect(host = "localhost", user = "root", password = "", database = "book_store")
@@ -37,14 +32,16 @@ class User:
 
 
         #Query to add a user into the database
-        new_user = "INSERT INTO `user_info` (`Name`, `Username`, `Password`, `Address`, `City`, `State`, `Zip Code`, `Payment Info`, `Shipping Info`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        new_user = "INSERT INTO `user_info` (`Name`, `Username`, `Password`, `Address`, `City`, `State`," \
+                   " `Zip Code`, `Payment Info`, `Shipping Info`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         cursor.execute(new_user,(name, username, password,address,city,state,zip,paymentinfo,shippinginfo))
         connection.commit()
 
-def DeleteUser():
-    cursor.execute("DELETE FROM `user_info` WHERE `Username` = username")
+def DeleteUser(username):
+    # query to delete user from database
+    sql = "DELETE FROM `user_info` WHERE Username = %s"
+    cursor.execute(sql, username)
     connection.commit()
-    print("Account has been Delete\n")
 
 class Books:
     def __init__(self, title, author, genre, isbn, price):
@@ -77,7 +74,7 @@ class Inventory(Books):
         outputbooks = cursor.fetchall()
         print("\n")
         for books in outputbooks:
-            print(books , "\n")
+            print(books, "\n")
 
         connection.commit()
     # def increaseStock():
@@ -131,7 +128,7 @@ def main():
                 else:
                     print("Incorrect username or password")
 
-
+            # This is the variable keeping us in the store menu
             store_in = True
 
             # This is the store menu
@@ -154,26 +151,62 @@ def main():
                     print("\n"+"###########")
                     print("User Menu")
                     print("###########")
-                    print("1 -- Edit User Info\n2 -- View Past Orders\n3 -- Delete account\n4 -- Exit")
+                    print("1 -- Edit Shipping info\n2 -- Edit Payment method\n3 -- Delete account\n4 -- View Order History\n5 -- Exit")
 
                     choice = int(input("Please Select: "))
                     # This doesn't do anything yet.
 
                     if choice == 1:
-                        break
+                        new_ship = input("What is the new shipping address?")
+                        ship_command = 'UPDATE `user_info` SET `Shipping Info` = %s WHERE Username = %s'
+                        cursor.execute(ship_command, (new_ship, username))
+                        connection.commit()
+                        print("Info has been edited.\n")
                     elif choice == 2:
-                        break
+                        new_pay = input("What is the new payment method?")
+                        pay_command = 'UPDATE `user_info` SET `Payment Info` = %s WHERE Username = %s'
+                        cursor.execute(pay_command, (new_pay, username))
+                        connection.commit()
+                        print("Info has been edited.\n")
                     elif choice == 3:
-                        DeleteUser()
+                        DeleteUser(username)
+                        print("User Account Deleted.")
                         #User no longer exist, exit store
                         store_in = False
                     elif choice == 4:
-                        print ("Exiting User Menu")
+                        print("Does nothing atm")
+                    elif choice == 5:
+                        print("Exiting User Menu")
                     else:
                         print("Invalid Menu option. Please try again!")
 
                 elif choice == 2:
-                    print("Cart Information")
+                    cart_in = True
+                    while cart_in:
+                        print("1 -- Add item to Cart\n2 -- Remove a item from Cart\n3 -- View Cart\n4 -- Exit")
+                        cart_input = int(input("What would you like to do with your cart? "))
+                        if cart_input == 1:
+                            addItem = input("What is the book's ISBN?")
+                            itemstock = input("How many would you like to add to cart? ")
+                            if itemstock == 0:
+                                print("Please enter value greather than 0")
+                                break
+                            else:
+                                item_add = 'INSERT INTO `cart` (`ISBN`, `Stock`,`Price`) VALUES (%s, %s,"10.99")'
+                                cursor.execute(item_add, (addItem, itemstock))
+                                connection.commit()
+                                print("Item has been added to the cart!\n")
+                        elif cart_input == 2:
+                            removeItem = input("What is the book's ISBN to be removed?")
+                            cursor.execute('DELETE FROM `cart` WHERE ISBN = %s', (removeItem))
+                            print("Item has been removed from the cart!\n")
+                        elif cart_input == 3:
+                            print("Does nothing atm")
+                        elif cart_input == 4:
+                            print("Exiting Cart Menu")
+                            cart_in = False
+                        else:
+                            print("Invalid Menu option. Please try again!")
 
                 elif choice == 3:
                     print("Checkout Cart")
@@ -185,7 +218,8 @@ def main():
                     # This exits the menu; not the program
                 elif choice == 5:
                     print("You have been logged out.")
-                    break
+                    # Could have used break here instead as it would have left the loop, but this is more clean and consistent (look at user menu)
+                    store_in = False
                 else:
                     print("Invalid Menu option. Please try again!")
 
