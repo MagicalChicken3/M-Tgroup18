@@ -77,8 +77,15 @@ class Inventory(Books):
             print(books, "\n")
 
         connection.commit()
-    # def increaseStock():
-    # def decreaseStock():
+    def decreaseStock(self, username):
+        findISBN = cursor.execute('SELECT `ISBN` FROM `cart` WHERE `Username` = %s', (username,))
+
+        invenstock = cursor.execute('SELECT `Stock` FROM `inventory` WHERE `ISBN` =  %s', (findISBN,))
+        cartstock = cursor.execute('SELECT `Stock` FROM `cart` WHERE `Username` = %s', (username,))
+
+        ###cursor.execute('UPDATE `inventory` SET `Stock` = %s - %s WHERE `ISBN` = %s', (invenstock,cartstock, findISBN))
+        ###cursor.execute("UPDATE `inventory` SET `Stock` = 'inventory.Stock' - 'cart.Stock' WHERE `ISBN` = %s",(findISBN))
+        connection.commit()
 
 
 class Cart():
@@ -91,7 +98,17 @@ class Cart():
         self.price = price
         self.total = total
 
+    def viewCart(self):
+        cursor.execute('SELECT * FROM `cart`')
+        outputcart = cursor.fetchall()
+        print("\n")
+        for books in outputcart:
+            print(books, "\n")
 
+        connection.commit()
+
+    def emptyCart(self):
+        pass
 
 
 def main():
@@ -113,6 +130,8 @@ def main():
         # It'll gather the username and password; then compare to the database and output an error otherwise
         if pre_login == 1:
             # This is the login menu
+            # This is the variable keeping us in the store menu
+            store_in = True
             while True:
                 print("\nEnter Username and Password")
                 username = input("Username: ")
@@ -123,13 +142,14 @@ def main():
                 # Fetch one record and return result
                 userexist = cursor.fetchone()
 
+
                 if userexist:
                     break
                 else:
-                    print("Incorrect username or password")
+                    print("Incorrect username or password \n")
+                    store_in = False
+                    break
 
-            # This is the variable keeping us in the store menu
-            store_in = True
 
             # This is the store menu
             while store_in:
@@ -187,13 +207,13 @@ def main():
                         cart_input = int(input("What would you like to do with your cart? "))
                         if cart_input == 1:
                             addItem = input("What is the book's ISBN?")
-                            itemstock = input("How many would you like to add to cart? ")
-                            if itemstock == 0:
-                                print("Please enter value greather than 0")
+                            itemstock = int(input("How many would you like to add to cart? "))
+                            if itemstock <= 0:
+                                print("Please enter value greater than 0.")
                                 break
                             else:
-                                item_add = 'INSERT INTO `cart` (`ISBN`, `Stock`,`Price`) VALUES (%s, %s,"10.99")'
-                                cursor.execute(item_add, (addItem, itemstock))
+                                item_add = 'INSERT INTO `cart` (`Username`,`ISBN`, `Stock`,`Price`) VALUES (%s, %s, %s,"10.99")'
+                                cursor.execute(item_add, (username, addItem, itemstock, ))
                                 connection.commit()
                                 print("Item has been added to the cart!\n")
                         elif cart_input == 2:
@@ -201,7 +221,9 @@ def main():
                             cursor.execute('DELETE FROM `cart` WHERE ISBN = %s', (removeItem))
                             print("Item has been removed from the cart!\n")
                         elif cart_input == 3:
-                            print("Does nothing atm")
+                            print("ViewCart")
+                            view_cart = Cart(None, None, None, None, None, None, None)
+                            view_cart.viewCart()
                         elif cart_input == 4:
                             print("Exiting Cart Menu")
                             cart_in = False
@@ -210,7 +232,16 @@ def main():
 
                 elif choice == 3:
                     print("Checkout Cart")
-
+                    buy_cart = input("Would you like to buy this cart? y/n")
+                    ### change stock, save to past orders, clear cart/database
+                    if buy_cart == 'y':
+                        print("cart bought")
+                        carted = Inventory(None, None, None, None, None, None)
+                        carted.decreaseStock(username)
+                    elif buy_cart == 'n':
+                        print("Exiting Checkout!")
+                    else:
+                        break
                 elif choice == 4:
                     print("View Store Items")
                     view = Inventory(None, None, None, None, None, None)
