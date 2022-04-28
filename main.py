@@ -68,20 +68,35 @@ class Inventory(Books):
 
     # def search_Book():
     ## This would do a sql query where it would search the inventory database and using the isbn, search the book database
-    ### DOES NOT SHOW STOCK COUNT
     def viewInventory(self):
-        cursor.execute('SELECT * FROM `books`')
+        cursor.execute("SELECT books.BookName, books.Author, books.Genre, books.ISBN, books.Price, inventory.Stock FROM books, inventory WHERE books.ISBN = inventory.ISBN")
         outputbooks = cursor.fetchall()
-        print("\n")
+
+        print('\n')
+        print('###################################################')
+        print('Viewing all books')
+        print('Book Title, Author, Genre, ISBN, Price, Stock')
+        print('###################################################')
         for books in outputbooks:
-            print(books, "\n")
+                print(books[0],',', books[1],',', books[2],',', books[3],',', books[4],',', books[5], '\n' )
 
         connection.commit()
     def decreaseStock(self, username):
-        findISBN = cursor.execute('SELECT `ISBN` FROM `cart` WHERE `Username` = %s', (username,))
+        cursor.execute('SELECT `ISBN` FROM `cart` WHERE `Username` = %s', (username,))
+        result = cursor.fetchall()
+        findISBN = result[0][0]
 
-        invenstock = cursor.execute('SELECT `Stock` FROM `inventory` WHERE `ISBN` =  %s', (findISBN,))
-        cartstock = cursor.execute('SELECT `Stock` FROM `cart` WHERE `Username` = %s', (username,))
+        cursor.execute('SELECT `Stock` FROM `inventory` WHERE `ISBN` =  %s', (findISBN,))
+        result = cursor.fetchall()
+        invenstock = result[0][0]
+
+        cursor.execute('SELECT `Stock` FROM `cart` WHERE `Username` = %s', (username,))
+        result = cursor.fetchall()
+        cartstock = result[0][0]
+
+        invenstock -= cartstock
+
+        cursor.execute('UPDATE `inventory` SET `Stock` = %s WHERE `ISBN` = %s', (invenstock, findISBN))
 
         ###cursor.execute('UPDATE `inventory` SET `Stock` = %s - %s WHERE `ISBN` = %s', (invenstock,cartstock, findISBN))
         ###cursor.execute("UPDATE `inventory` SET `Stock` = 'inventory.Stock' - 'cart.Stock' WHERE `ISBN` = %s",(findISBN))
@@ -98,8 +113,8 @@ class Cart():
         self.price = price
         self.total = total
 
-    def viewCart(self):
-        cursor.execute('SELECT * FROM `cart`')
+    def viewCart(self, username):
+        cursor.execute('SELECT * FROM `cart` WHERE `Username` = %s', (username))
         outputcart = cursor.fetchall()
         print("\n")
         for books in outputcart:
@@ -107,8 +122,9 @@ class Cart():
 
         connection.commit()
 
-    def emptyCart(self):
-        pass
+    def emptyCart(self, username):
+        cursor.execute('DELETE FROM `cart` WHERE `Username` = %s', (username))
+        connection.commit()
 
 
 def main():
@@ -222,8 +238,8 @@ def main():
                             print("Item has been removed from the cart!\n")
                         elif cart_input == 3:
                             print("ViewCart")
-                            view_cart = Cart(None, None, None, None, None, None, None)
-                            view_cart.viewCart()
+                            view_cart = Cart(username, None, None, None, None, None, None)
+                            view_cart.viewCart(username)
                         elif cart_input == 4:
                             print("Exiting Cart Menu")
                             cart_in = False
@@ -235,9 +251,13 @@ def main():
                     buy_cart = input("Would you like to buy this cart? y/n")
                     ### change stock, save to past orders, clear cart/database
                     if buy_cart == 'y':
+
                         print("cart bought")
                         carted = Inventory(None, None, None, None, None, None)
                         carted.decreaseStock(username)
+                        empty_cart = Cart(None,None,None,None,None,None,None)
+                        empty_cart.emptyCart(username)
+
                     elif buy_cart == 'n':
                         print("Exiting Checkout!")
                     else:
