@@ -81,6 +81,8 @@ class Inventory(Books):
                 print(books[0],',', books[1],',', books[2],',', books[3],',', books[4],',', books[5], '\n' )
 
         connection.commit()
+        
+    # This will give an error if you type in the wrong ISBN when you add to cart.
     def decreaseStock(self, username):
         cursor.execute('SELECT `ISBN` FROM `cart` WHERE `Username` = %s', (username,))
         result = cursor.fetchall()
@@ -145,6 +147,9 @@ class cart_history():
 
         cursor.execute("INSERT INTO `cart_history`(`cart_number`, `ISBN`, `quantity`, `total_price`, `username`) VALUES (%s,%s,%s,%s,%s)", (cartnum, isbn, stock, total_price, username))
         connection.commit()
+        
+        #print this for user
+        print("Cart number is ", cartnum)
 
     def viewhistory(self, username):
         cursor.execute('SELECT `quantity` FROM `cart_history` WHERE `cart_number` = %s', (username,))
@@ -228,13 +233,13 @@ def main():
                     # This doesn't do anything yet.
 
                     if choice == 1:
-                        new_ship = input("What is the new shipping address?")
+                        new_ship = input("What is the new shipping address? ")
                         ship_command = 'UPDATE `user_info` SET `Shipping Info` = %s WHERE Username = %s'
                         cursor.execute(ship_command, (new_ship, username))
                         connection.commit()
                         print("Info has been edited.\n")
                     elif choice == 2:
-                        new_pay = input("What is the new payment method?")
+                        new_pay = input("What is the new payment method? ")
                         pay_command = 'UPDATE `user_info` SET `Payment Info` = %s WHERE Username = %s'
                         cursor.execute(pay_command, (new_pay, username))
                         connection.commit()
@@ -245,6 +250,7 @@ def main():
                         #User no longer exist, exit store
                         store_in = False
                     elif choice == 4:
+                        print(username, " - Past Orders")
                         viewhist = cart_history (None, None, None, None, username)
                         viewhist.viewhistory(username)
                     elif choice == 5:
@@ -252,13 +258,17 @@ def main():
                     else:
                         print("Invalid Menu option. Please try again!")
 
+                # Cart menu
                 elif choice == 2:
                     cart_in = True
                     while cart_in:
+                        print("\n"+"###########")
+                        print("Cart Menu")
+                        print("###########")
                         print("1 -- Add item to Cart\n2 -- Remove a item from Cart\n3 -- View Cart\n4 -- Exit")
                         cart_input = int(input("What would you like to do with your cart? "))
                         if cart_input == 1:
-                            addItem = input("What is the book's ISBN?")
+                            addItem = input("What is the book's ISBN? ")
                             itemstock = int(input("How many would you like to add to cart? "))
                             if itemstock <= 0:
                                 print("Please enter value greater than 0.")
@@ -269,7 +279,7 @@ def main():
                                 connection.commit()
                                 print("Item has been added to the cart!\n")
                         elif cart_input == 2:
-                            removeItem = input("What is the book's ISBN to be removed?")
+                            removeItem = input("What is the book's ISBN to be removed? ")
                             cursor.execute('DELETE FROM `cart` WHERE ISBN = %s', (removeItem))
                             print("Item has been removed from the cart!\n")
                         elif cart_input == 3:
@@ -284,11 +294,11 @@ def main():
 
                 elif choice == 3:
                     print("Checkout Cart")
-                    buy_cart = input("Would you like to buy this cart? y/n")
+                    buy_cart = input("Would you like to buy this cart? y/n ")
                     ### change stock, save to past orders, clear cart/database
                     if buy_cart == 'y':
 
-                        print("cart bought")
+                        print("Cart Bought!")
                         carted = Inventory(None, None, None, None, None, None)
                         carted.decreaseStock(username)
                         addtohist = cart_history(None,None,None,None, None)
