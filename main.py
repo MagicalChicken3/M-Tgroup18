@@ -1,5 +1,6 @@
 import pymysql
 
+import random
 connection = pymysql.connect(host = "localhost", user = "root", password = "", database = "book_store")
 cursor = connection.cursor()
 
@@ -66,7 +67,6 @@ class Inventory(Books):
         self.price = price
         # Call a sql query to the book database and add a book
 
-    # def search_Book():
     ## This would do a sql query where it would search the inventory database and using the isbn, search the book database
     def viewInventory(self):
         cursor.execute("SELECT books.BookName, books.Author, books.Genre, books.ISBN, books.Price, inventory.Stock FROM books, inventory WHERE books.ISBN = inventory.ISBN")
@@ -98,8 +98,6 @@ class Inventory(Books):
 
         cursor.execute('UPDATE `inventory` SET `Stock` = %s WHERE `ISBN` = %s', (invenstock, findISBN))
 
-        ###cursor.execute('UPDATE `inventory` SET `Stock` = %s - %s WHERE `ISBN` = %s', (invenstock,cartstock, findISBN))
-        ###cursor.execute("UPDATE `inventory` SET `Stock` = 'inventory.Stock' - 'cart.Stock' WHERE `ISBN` = %s",(findISBN))
         connection.commit()
 
 
@@ -126,6 +124,43 @@ class Cart():
         cursor.execute('DELETE FROM `cart` WHERE `Username` = %s', (username))
         connection.commit()
 
+class cart_history():
+    def __init__(self, cartnum, ISBN, quantity, total_price, username):
+        self.cartnum = cartnum
+        self.ISBN = ISBN
+        self.quantity = quantity
+        self.total_price = total_price
+        self.username = username
+
+    def addhistory(self, username):
+        cartnum = random.randint(1,1200)
+
+        cursor.execute('SELECT `ISBN` FROM `cart` WHERE `Username` = %s',(username))
+        isbn = cursor.fetchall()
+
+
+        cursor.execute('SELECT `Stock` FROM `cart` WHERE `Username` = %s AND `ISBN` = %s',(username,isbn))
+        stock = cursor.fetchall()
+        total_price = stock[0][0] * 10.99
+
+        cursor.execute("INSERT INTO `cart_history`(`cart_number`, `ISBN`, `quantity`, `total_price`, `username`) VALUES (%s,%s,%s,%s,%s)", (cartnum, isbn, stock, total_price, username))
+        connection.commit()
+
+    def viewhistory(self, username):
+        cursor.execute('SELECT `quantity` FROM `cart_history` WHERE `cart_number` = %s', (username,))
+        result = cursor.fetchall()
+
+        for num in result:
+             num+= num
+
+        total_price = result * 10.99
+        cursor.execute(
+            "SELECT cart_history.cart_number, cart_history.ISBN, cart_history.quantity  WHERE cart_history.username = %s",(username))
+        outputhist = cursor.fetchall()
+
+        for hist in outputhist:
+            print(hist[0], ',', hist[1], ',', hist[2], ',' '\n')
+        print('Your total is:', total_price)
 
 def main():
     # This menu table is for the menu system to print out the message/options
@@ -210,7 +245,8 @@ def main():
                         #User no longer exist, exit store
                         store_in = False
                     elif choice == 4:
-                        print("Does nothing atm")
+                        viewhist = cart_history (None, None, None, None, username)
+                        viewhist.viewhistory(username)
                     elif choice == 5:
                         print("Exiting User Menu")
                     else:
@@ -255,6 +291,8 @@ def main():
                         print("cart bought")
                         carted = Inventory(None, None, None, None, None, None)
                         carted.decreaseStock(username)
+                        addtohist = cart_history(None,None,None,None, None)
+                        addtohist.addhistory(username)
                         empty_cart = Cart(None,None,None,None,None,None,None)
                         empty_cart.emptyCart(username)
 
