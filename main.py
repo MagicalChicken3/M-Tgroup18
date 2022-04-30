@@ -1,8 +1,10 @@
 import pymysql
 
 import random
-connection = pymysql.connect(host = "localhost", user = "root", password = "", database = "book_store")
+
+connection = pymysql.connect(host="localhost", user="root", password="", database="book_store")
 cursor = connection.cursor()
+
 
 # Will add sql calls into the init to add to database
 class User:
@@ -18,8 +20,7 @@ class User:
         self.shippinginfo = shippinginfo
 
     def RegisterUser(self):
-
-        #gathering user information
+        # gathering user information
         name = input("What is your name? ")
         username = input("What is your username? ")
         password = input("What is your password? ")
@@ -29,20 +30,21 @@ class User:
         zip = input("What is your zip code? ")
         paymentinfo = input("What is your payment type (Card or Cash)? ")
         shippinginfo = input("What is your shipping address? ")
-        print("Account created: " + username + "\n" +"#############################" + "\n")
+        print("Account created: " + username + "\n" + "#############################" + "\n")
 
-
-        #Query to add a user into the database
+        # Query to add a user into the database
         new_user = "INSERT INTO `user_info` (`Name`, `Username`, `Password`, `Address`, `City`, `State`," \
                    " `Zip Code`, `Payment Info`, `Shipping Info`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-        cursor.execute(new_user,(name, username, password,address,city,state,zip,paymentinfo,shippinginfo))
+        cursor.execute(new_user, (name, username, password, address, city, state, zip, paymentinfo, shippinginfo))
         connection.commit()
+
 
 def DeleteUser(username):
     # query to delete user from database
     sql = "DELETE FROM `user_info` WHERE Username = %s"
     cursor.execute(sql, username)
     connection.commit()
+
 
 class Books:
     def __init__(self, title, author, genre, isbn, price):
@@ -78,10 +80,10 @@ class Inventory(Books):
         print('Book Title, Author, Genre, ISBN, Price, Stock')
         print('###################################################')
         for books in outputbooks:
-                print(books[0],',', books[1],',', books[2],',', books[3],',', books[4],',', books[5], '\n' )
+            print(books[0], ',', books[1], ',', books[2], ',', books[3], ',', books[4], ',', books[5], '\n')
 
         connection.commit()
-        
+
     # This will give an error if you type in the wrong ISBN when you add to cart.
     def decreaseStock(self, username):
         cursor.execute('SELECT `ISBN` FROM `cart` WHERE `Username` = %s', (username,))
@@ -126,6 +128,7 @@ class Cart():
         cursor.execute('DELETE FROM `cart` WHERE `Username` = %s', (username))
         connection.commit()
 
+
 class cart_history():
     def __init__(self, cartnum, ISBN, quantity, total_price, username):
         self.cartnum = cartnum
@@ -135,37 +138,64 @@ class cart_history():
         self.username = username
 
     def addhistory(self, username):
-        cartnum = random.randint(1,1200)
+        cartnum = random.randint(1, 1200)
 
-        cursor.execute('SELECT `ISBN` FROM `cart` WHERE `Username` = %s',(username))
+        cursor.execute('SELECT `ISBN` FROM `cart` WHERE `Username` = %s', (username))
         isbn = cursor.fetchall()
 
-
-        cursor.execute('SELECT `Stock` FROM `cart` WHERE `Username` = %s AND `ISBN` = %s',(username,isbn))
+        cursor.execute('SELECT `Stock` FROM `cart` WHERE `Username` = %s AND `ISBN` = %s', (username, isbn))
         stock = cursor.fetchall()
         total_price = stock[0][0] * 10.99
 
-        cursor.execute("INSERT INTO `cart_history`(`cart_number`, `ISBN`, `quantity`, `total_price`, `username`) VALUES (%s,%s,%s,%s,%s)", (cartnum, isbn, stock, total_price, username))
+        cursor.execute(
+            "INSERT INTO `cart_history`(`cart_number`, `ISBN`, `quantity`, `total_price`, `username`) VALUES (%s,%s,%s,%s,%s)",
+            (cartnum, isbn, stock, total_price, username))
         connection.commit()
-        
-        #print this for user
+
+        # print this for user
         print("Cart number is ", cartnum)
 
     def viewhistory(self, username):
-        cursor.execute('SELECT `quantity` FROM `cart_history` WHERE `cart_number` = %s', (username,))
-        result = cursor.fetchall()
-
-        for num in result:
-             num+= num
-
-        total_price = result * 10.99
+        # This shows the past orders
+        print("Cart Number, ISBN, Quantity")
         cursor.execute(
-            "SELECT cart_history.cart_number, cart_history.ISBN, cart_history.quantity  WHERE cart_history.username = %s",(username))
+            "SELECT `cart_number`, `ISBN`, `quantity` FROM `cart_history` WHERE `username` = %s",(username))
         outputhist = cursor.fetchall()
 
         for hist in outputhist:
-            print(hist[0], ',', hist[1], ',', hist[2], ',' '\n')
-        print('Your total is:', total_price)
+            print(hist[0], ',', hist[1], ',', hist[2])
+
+        # This part calculates the overall total of a particular order
+        cart_num = int(input("What is the cart number you would like to view? "))
+        cursor.execute('SELECT `quantity` FROM `cart_history` WHERE `cart_number` = %s', (cart_num,))
+        result = cursor.fetchall()
+        print("How many books did you order in total for order", cart_num, "? ")
+        cart_quant = int(input())
+
+        total_price = cart_quant * 10.99
+        print('Your total for cart number', cart_num, 'is: ', total_price)
+        connection.commit()
+'''
+        for quant in result:
+            num = quant
+            num += quant
+
+        total_price = num * 11
+
+        print('Your total for cart number', cart_num, 'is: ', total_price)
+
+
+###view cart
+        cursor.execute('SELECT * FROM `cart_history` WHERE `Username` = %s', (username))
+        outputcart = cursor.fetchall()
+        print("\n")
+        for books in outputcart:
+            print(books, "\n")
+
+
+        connection.commit()
+'''
+
 
 def main():
     # This menu table is for the menu system to print out the message/options
@@ -198,7 +228,6 @@ def main():
                 # Fetch one record and return result
                 userexist = cursor.fetchone()
 
-
                 if userexist:
                     break
                 else:
@@ -206,14 +235,12 @@ def main():
                     store_in = False
                     break
 
-
             # This is the store menu
             while store_in:
-                #Make main menu look nicer
-                print("\n"+"###########")
+                # Make main menu look nicer
+                print("\n" + "###########")
                 print("Home Page")
                 print("###########")
-
 
                 for key in menu.keys():
                     print(key, '--', menu[key])
@@ -224,13 +251,13 @@ def main():
 
                 # choice 1 goes into the User Menu to edit info, delete user account, and view past orders.
                 if choice == 1:
-                    print("\n"+"###########")
+                    print("\n" + "###########")
                     print("User Menu")
                     print("###########")
-                    print("1 -- Edit Shipping info\n2 -- Edit Payment method\n3 -- Delete account\n4 -- View Order History\n5 -- Exit")
+                    print(
+                        "1 -- Edit Shipping info\n2 -- Edit Payment method\n3 -- Delete account\n4 -- View Order History\n5 -- Exit")
 
                     choice = int(input("Please Select: "))
-                    # This doesn't do anything yet.
 
                     if choice == 1:
                         new_ship = input("What is the new shipping address? ")
@@ -247,11 +274,11 @@ def main():
                     elif choice == 3:
                         DeleteUser(username)
                         print("User Account Deleted.")
-                        #User no longer exist, exit store
+                        # User no longer exist, exit store
                         store_in = False
                     elif choice == 4:
                         print(username, " - Past Orders")
-                        viewhist = cart_history (None, None, None, None, username)
+                        viewhist = cart_history(None, None, None, None, username)
                         viewhist.viewhistory(username)
                     elif choice == 5:
                         print("Exiting User Menu")
@@ -262,7 +289,7 @@ def main():
                 elif choice == 2:
                     cart_in = True
                     while cart_in:
-                        print("\n"+"###########")
+                        print("\n" + "###########")
                         print("Cart Menu")
                         print("###########")
                         print("1 -- Add item to Cart\n2 -- Remove a item from Cart\n3 -- View Cart\n4 -- Exit")
@@ -275,7 +302,7 @@ def main():
                                 break
                             else:
                                 item_add = 'INSERT INTO `cart` (`Username`,`ISBN`, `Stock`,`Price`) VALUES (%s, %s, %s,"10.99")'
-                                cursor.execute(item_add, (username, addItem, itemstock, ))
+                                cursor.execute(item_add, (username, addItem, itemstock,))
                                 connection.commit()
                                 print("Item has been added to the cart!\n")
                         elif cart_input == 2:
@@ -301,9 +328,9 @@ def main():
                         print("Cart Bought!")
                         carted = Inventory(None, None, None, None, None, None)
                         carted.decreaseStock(username)
-                        addtohist = cart_history(None,None,None,None, None)
+                        addtohist = cart_history(None, None, None, None, None)
                         addtohist.addhistory(username)
-                        empty_cart = Cart(None,None,None,None,None,None,None)
+                        empty_cart = Cart(None, None, None, None, None, None, None)
                         empty_cart.emptyCart(username)
 
                     elif buy_cart == 'n':
@@ -334,6 +361,5 @@ def main():
 
 
 main()
-
 
 connection.close()
