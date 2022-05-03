@@ -42,8 +42,12 @@ class User:
 def DeleteUser(username):
     # query to delete user from database
     sql = "DELETE FROM `user_info` WHERE Username = %s"
-    cursor.execute(sql, username)
+    cursor.execute(sql, (username))
     connection.commit()
+    sql = "DELETE FROM `cart_history` WHERE Username = %s"
+    cursor.execute(sql, (username))
+    connection.commit()
+
 
 
 class Books:
@@ -147,13 +151,14 @@ class cart_history():
         stock = cursor.fetchall()
         total_price = stock[0][0] * 10.99
 
-        cursor.execute(
-            "INSERT INTO `cart_history`(`cart_number`, `ISBN`, `quantity`, `total_price`, `username`) VALUES (%s,%s,%s,%s,%s)",
+        cursor.execute("INSERT INTO `cart_history`(`cart_number`, `ISBN`, `quantity`, `total_price`, `username`) VALUES (%s,%s,%s,%s,%s)",
             (cartnum, isbn, stock, total_price, username))
         connection.commit()
 
         # print this for user
         print("Cart number is ", cartnum)
+
+
 
     def viewhistory(self, username):
         # This shows the past orders
@@ -169,32 +174,13 @@ class cart_history():
         cart_num = int(input("What is the cart number you would like to view? "))
         cursor.execute('SELECT `quantity` FROM `cart_history` WHERE `cart_number` = %s', (cart_num,))
         result = cursor.fetchall()
-        print("How many books did you order in total for order", cart_num, "? ")
-        cart_quant = int(input())
+        print("How many books did you order in total for order", cart_num, "?")
+        cart_quant = int(input(''))
 
         total_price = cart_quant * 10.99
         print('Your total for cart number', cart_num, 'is: ', total_price)
         connection.commit()
-'''
-        for quant in result:
-            num = quant
-            num += quant
 
-        total_price = num * 11
-
-        print('Your total for cart number', cart_num, 'is: ', total_price)
-
-
-###view cart
-        cursor.execute('SELECT * FROM `cart_history` WHERE `Username` = %s', (username))
-        outputcart = cursor.fetchall()
-        print("\n")
-        for books in outputcart:
-            print(books, "\n")
-
-
-        connection.commit()
-'''
 
 
 def main():
@@ -272,12 +258,16 @@ def main():
                         connection.commit()
                         print("Info has been edited.\n")
                     elif choice == 3:
-                        DeleteUser(username)
-                        print("User Account Deleted.")
-                        # User no longer exist, exit store
-                        store_in = False
+                        confirm = input("Are you sure you want to delete this account (y/n)? ")
+                        if confirm == "y":
+                            DeleteUser(username)
+                            print("User Account Deleted.")
+                            # User no longer exist, exit store
+                            store_in = False
                     elif choice == 4:
-                        print(username, " - Past Orders")
+                        print('\n',"#########################")
+                        print(username, " - Viewing Past Orders")
+                        print("#########################", '\n')
                         viewhist = cart_history(None, None, None, None, username)
                         viewhist.viewhistory(username)
                     elif choice == 5:
@@ -310,7 +300,10 @@ def main():
                             cursor.execute('DELETE FROM `cart` WHERE ISBN = %s', (removeItem))
                             print("Item has been removed from the cart!\n")
                         elif cart_input == 3:
-                            print("ViewCart")
+                            print('\n', '####################')
+                            print("Viewing your cart")
+                            print('####################')
+
                             view_cart = Cart(username, None, None, None, None, None, None)
                             view_cart.viewCart(username)
                         elif cart_input == 4:
@@ -320,30 +313,42 @@ def main():
                             print("Invalid Menu option. Please try again!")
 
                 elif choice == 3:
+                    print ('\n',"################")
                     print("Checkout Cart")
+                    print ("################", '\n')
+
                     buy_cart = input("Would you like to buy this cart? y/n ")
                     ### change stock, save to past orders, clear cart/database
                     if buy_cart == 'y':
+                        cartnum = random.randint(1, 1200)
+                        cartlen = cursor.execute('SELECT cart.ISBN FROM `cart`')
 
                         print("Cart Bought!")
+
                         carted = Inventory(None, None, None, None, None, None)
                         carted.decreaseStock(username)
-                        addtohist = cart_history(None, None, None, None, None)
-                        addtohist.addhistory(username)
+                        # Still runs with single item carts
+                        for x in range(cartlen):
+                            addtohist = cart_history(None, None, None, None, None)
+                            addtohist.addhistory(username, cartnum)
                         empty_cart = Cart(None, None, None, None, None, None, None)
                         empty_cart.emptyCart(username)
 
+                        # print this for user
+                        print("Cart number is ", cartnum)
+
                     elif buy_cart == 'n':
-                        print("Exiting Checkout!")
+                        print("Exiting Checkout!\n")
                     else:
                         break
                 elif choice == 4:
                     print("View Store Items")
+
                     view = Inventory(None, None, None, None, None, None)
                     view.viewInventory()
                     # This exits the menu; not the program
                 elif choice == 5:
-                    print("You have been logged out.")
+                    print("You have been logged out.\n")
                     # Could have used break here instead as it would have left the loop, but this is more clean and consistent (look at user menu)
                     store_in = False
                 else:
